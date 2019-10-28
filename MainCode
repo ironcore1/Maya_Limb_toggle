@@ -1,0 +1,31 @@
+import pymel.core as pm
+import maya.cmds as cmds
+
+def getJointChildren():
+    '''
+    Get selected joint and then grab all children joints and select them
+    '''
+    currentSelection = pm.ls(selection=True)[0]
+
+    jntChild = pm.listRelatives(currentSelection,allDescendents=True)
+
+    jointList = [currentSelection]
+
+    for joint in jntChild:
+        if pm.objectType(joint, isType='joint'):
+            jointList.append(joint)
+            
+    pm.select(clear=True)
+    pm.select(jointList)
+    return jointList
+    
+
+
+connectionJoint = pm.listConnections('def_l_legLwr_joint', destination=True, source=True)
+setConnectionJoint = set(connectionJoint)
+
+for node in setConnectionJoint:
+    if pm.nodeType(node) == 'skinCluster':
+        nameNode = str(node)
+        leTest = pm.skinCluster(nameNode, siv='def_l_legLwr_joint', edit=True, wi=True, query=True)
+        
