@@ -1,6 +1,8 @@
 import pymel.core as pm
 import maya.cmds as cmds
 
+jointList = False
+
 def getJointChildren():
     '''
     Get selected joint and then grab all children joints and select them
@@ -8,7 +10,8 @@ def getJointChildren():
     currentSelection = pm.ls(selection=True)[0]
 
     jntChild = pm.listRelatives(currentSelection,allDescendents=True)
-
+    
+    global jointList
     jointList = [currentSelection]
 
     for joint in jntChild:
@@ -18,14 +21,23 @@ def getJointChildren():
     pm.select(clear=True)
     pm.select(jointList)
     return jointList
-    
 
 
-connectionJoint = pm.listConnections('def_l_legLwr_joint', destination=True, source=True)
-setConnectionJoint = set(connectionJoint)
-
-for node in setConnectionJoint:
-    if pm.nodeType(node) == 'skinCluster':
-        nameNode = str(node)
-        leTest = pm.skinCluster(nameNode, siv='def_l_legLwr_joint', edit=True, wi=True, query=True)
+def getVertsOfJointName(jointName=False):
+    '''
+    Get the vertice of the joint which are influecneing that part of the rig
+    '''
+    if not jointName:
+        pm.warning('You have not provided a joint name')
+        return False
         
+    connectionJoint = pm.listConnections(jointName, destination=True, source=True)
+    setConnectionJoint = set(connectionJoint)
+    #get the skin cluster within the node editor and grab all the verts
+    for node in setConnectionJoint:
+        if pm.nodeType(node) == 'skinCluster':
+            nameNode = str(node)
+            leTest = pm.skinCluster(nameNode, selectInfluenceVerts=jointName, edit=True)
+            
+        
+
