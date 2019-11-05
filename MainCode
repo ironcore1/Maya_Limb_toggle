@@ -1,43 +1,61 @@
 import pymel.core as pm
 import maya.cmds as cmds
 
-jointList = False
+
+testList = ['def_l_legUprAllTwist_joint','def_l_legLwr_joint', 'def_l_horseLink_joint']
 
 def getJointChildren():
     '''
     Get selected joint and then grab all children joints and select them
     '''
-    currentSelection = pm.ls(selection=True)[0]
+    
+    
+    currentSelection = pm.ls(selection=True)
 
     jntChild = pm.listRelatives(currentSelection,allDescendents=True)
     
-    global jointList
-    jointList = [currentSelection]
-
+    jointList = []
+    
     for joint in jntChild:
         if pm.objectType(joint, isType='joint'):
-            jointList.append(joint)
-            
+            nameOfJoint = joint.nodeName()
+            jointList.append(nameOfJoint)
+    print jointList        
     pm.select(clear=True)
-    pm.select(jointList)
+    #this is for testing joint selection
+    #pm.select(jointList)
     return jointList
 
 
-def getVertsOfJointName(jointName=False):
+def getVertsOfJointName(jointList):
     '''
     Get the vertice of the joint which are influecneing that part of the rig
     '''
-    if not jointName:
-        pm.warning('You have not provided a joint name')
-        return False
+    
+    #Store verts in this list
+    grabbedVerts = []
+    
+    #go through each joint
+    for joints in jointList:         
         
-    connectionJoint = pm.listConnections(jointName, destination=True, source=True)
-    setConnectionJoint = set(connectionJoint)
-    #get the skin cluster within the node editor and grab all the verts
-    for node in setConnectionJoint:
-        if pm.nodeType(node) == 'skinCluster':
-            nameNode = str(node)
-            leTest = pm.skinCluster(nameNode, selectInfluenceVerts=jointName, edit=True)
-            
+        #get all connections linked top to the joint
+        connectionJoint = pm.listConnections(joints, destination=True, source=True)
+        #remove duplicates from the previous  command
+        setConnectionJoint = set(connectionJoint)
         
+        #get the skin cluster within the node editor and grab all the verts
+        for node in setConnectionJoint:
+            #check if skinClust, if so grab the influnced verts
+            if pm.nodeType(node) == 'skinCluster':
+                nameNode = str(node)
+                pm.skinCluster(nameNode, selectInfluenceVerts=joints, edit=True)
+                vertsOfJoint = pm.ls(selection=True, flatten=True)
+                grabbedVerts.append(vertsOfJoint)
+    
+    return pm.select(grabbedVerts)
+    
+                
+derp = getVertsOfJointName(getJointChildren())        
+print(derp)
+
 
